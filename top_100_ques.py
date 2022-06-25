@@ -2321,7 +2321,7 @@ class UnionFind:        #带权重的并查集
 #             hash_map[pre] += 1
 #         return res
 
-"""560. 和为 K 的子数组""" #把这个数组分成三段,左段和右段是标准的升序数组,中段数组虽是无序的,但满足最小值大于左段的最大值,最大值小于右段的最小值。
+'''581. 最短无序连续子数组''' #把这个数组分成三段,左段和右段是标准的升序数组,中段数组虽是无序的,但满足最小值大于左段的最大值,最大值小于右段的最小值。
 # class Solution:            #找中段的左右边界
 #     def findUnsortedSubarray(self, nums: List[int]) -> int:
 #         n = len(nums)
@@ -2338,33 +2338,6 @@ class UnionFind:        #带权重的并查集
 #                 left = n - i - 1
 #         return 0 if left == -1 else right - left + 1
 
-"""621. 任务调度器"""  #桶思想
-# class Solution:
-#     def leastInterval(self, tasks: List[str], n: int) -> int:
-#         freq = collections.Counter(tasks)
-#         # 最多的执行次数
-#         maxExec = max(freq.values())
-#         # 具有最多执行次数的任务数量
-#         maxCount = sum(1 for v in freq.values() if v == maxExec)
-#         return max((maxExec - 1) * (n + 1) + maxCount, len(tasks))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 """617. 合并二叉树"""
 # class Solution:
 #     def mergeTrees(self, root1: TreeNode, root2: TreeNode) -> TreeNode:
@@ -2377,7 +2350,15 @@ class UnionFind:        #带权重的并查集
 #         new_node.right = self.mergeTrees(root1.right, root2.right)
 #         return new_node
 
-
+"""621. 任务调度器"""  #桶思想
+# class Solution:
+#     def leastInterval(self, tasks: List[str], n: int) -> int:
+#         freq = collections.Counter(tasks)
+#         # 最多的执行次数
+#         maxExec = max(freq.values())
+#         # 具有最多执行次数的任务数量
+#         maxCount = sum(1 for v in freq.values() if v == maxExec)
+#         return max((maxExec - 1) * (n + 1) + maxCount, len(tasks))
 
 
 """647. 回文子串"""
