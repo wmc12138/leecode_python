@@ -1,7 +1,10 @@
 from cmath import inf
 from copy import deepcopy
+from hashlib import new
+from inspect import stack
+from turtle import left, right
 from typing import List, Optional, final
-from sympy import re
+
 
 """1.两数之和"""
 # class Solution:
@@ -990,7 +993,7 @@ class TreeNode:
 #         return max_length
 
 """136. 只出现一次的数字"""
-from functools import reduce
+from functools import lru_cache, reduce
 # class Solution:
 #     def singleNumber(self, nums: List[int]) -> int:
 #         return reduce(lambda x, y: x ^ y, nums)
@@ -2034,13 +2037,345 @@ import functools         #记忆化搜索，在python中可以利用@functools.l
 #             return res
 #         return dfs(s,0)
 
-"""399. 除法求值"""
+"""399. 除法求值"""     #并查集：记录了节点之间的连通关系
+class UnionFind:        #带权重的并查集
+    def __init__(self):
+        """
+        记录每个节点的父节点
+        记录每个节点到根节点的权重
+        """
+        self.father = {}
+        self.value = {}
+    
+    def find(self,x):
+        """
+        查找根节点
+        路径压缩
+        更新权重
+        """
+        root = x
+        # 节点更新权重的时候要放大的倍数
+        base = 1
+        while self.father[root] != None:
+            root = self.father[root]
+            base *= self.value[root]
+        
+        while x != root:
+            original_father = self.father[x]
+            ##### 离根节点越远，放大的倍数越高
+            self.value[x] *= base
+            base /= self.value[original_father]
+            self.father[x] = root
+            x = original_father
+         
+        return root
+    
+    def merge(self,x,y,val):
+        """
+        合并两个节点
+        """
+        root_x,root_y = self.find(x),self.find(y)
+        
+        if root_x != root_y:
+            self.father[root_x] = root_y
+            ##### 四边形法则更新根节点的权重
+            self.value[root_x] = self.value[y] * val / self.value[x]
+
+    def is_connected(self,x,y):
+        """
+        两节点是否相连
+        """
+        return x in self.value and y in self.value and self.find(x) == self.find(y)
+    
+    def add(self,x):
+        """
+        添加新节点，初始化权重为1.0
+        """
+        if x not in self.father:
+            self.father[x] = None
+            self.value[x] = 1.0
+
+
+# class Solution:
+#     def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+#         uf = UnionFind()
+#         for (a,b),val in zip(equations,values):
+#             uf.add(a)
+#             uf.add(b)
+#             uf.merge(a,b,val)
+    
+#         res = [-1.0] * len(queries)
+
+#         for i,(a,b) in enumerate(queries):
+#             if uf.is_connected(a,b):
+#                 res[i] = uf.value[a] / uf.value[b]
+#         return res
+
+"""406. 根据身高重建队列""" #一般这种数对，还涉及排序的，根据第一个元素正向排序，根据第二个元素反向排序，
+                            #或者根据第一个元素反向排序，根据第二个元素正向排序，往往能够简化解题过程。
+# class Solution:             #先排序，再插队
+#     def reconstructQueue(self, people: List[List[int]]) -> List[List[int]]:
+#         res = []
+#         people = sorted(people, key = lambda x: (-x[0], x[1]))
+#         for p in people:
+#             if len(res) <= p[1]:
+#                 res.append(p)
+#             elif len(res) > p[1]:
+#                 res.insert(p[1], p)
+#         return res
+
+"""416. 分割等和子集"""
+# class Solution:
+#     def canPartition(self, nums: List[int]) -> bool:
+#         n = len(nums)
+#         if n < 2:
+#             return False
+        
+#         total = sum(nums)
+#         maxNum = max(nums)
+#         if total & 1:  #算奇偶的一种特别酷的方法
+#             return False
+        
+#         target = total // 2
+#         if maxNum > target:
+#             return False
+        
+#         dp = [[False] * (target + 1) for _ in range(n)]
+#         for i in range(n):
+#             dp[i][0] = True
+        
+#         dp[0][nums[0]] = True
+#         for i in range(1, n):
+#             num = nums[i]
+#             for j in range(1, target + 1):
+#                 if j >= num:
+#                     dp[i][j] = dp[i - 1][j] | dp[i - 1][j - num]       #因为每次只使用了上一行的状态，可以考虑空间优化
+#                 else:
+#                     dp[i][j] = dp[i - 1][j]
+        
+#         return dp[n - 1][target]
+
+"""437. 路径总和 III"""
+# class Solution:
+#     def pathSum(self, root: TreeNode, targetSum: int) -> int:
+#         def rootSum(root, targetSum):
+#             if root is None:
+#                 return 0
+
+#             ret = 0
+#             if root.val == targetSum:
+#                 ret += 1
+
+#             ret += rootSum(root.left, targetSum - root.val)
+#             ret += rootSum(root.right, targetSum - root.val)
+#             return ret
+        
+#         if root is None:
+#             return 0
+            
+#         ret = rootSum(root, targetSum)
+#         ret += self.pathSum(root.left, targetSum)
+#         ret += self.pathSum(root.right, targetSum)
+#         return ret
+
+# class Solution:                 #前缀和:达到当前元素的路径上，之前所有元素的和
+#     def pathSum(self, root: TreeNode, targetSum: int) -> int:
+#         prefix = collections.defaultdict(int)
+#         prefix[0] = 1       #为满足自身节点值就等于targetSum的节点提供路径
+#         def dfs(root, cur):
+#             if not root:
+#                 return 0
+#             res = 0
+#             cur += root.val
+#             res += prefix[cur - targetSum]
+#             prefix[cur] += 1
+#             res += dfs(root.left, cur)
+#             res += dfs(root.right, cur)
+#             prefix[cur] -= 1
+#             return res
+#         return dfs(root, 0)
+
+"""438.找到字符串中所有字母异位词"""      #ord('a')=97
+# class Solution:
+#     def findAnagrams(self, s: str, p: str) -> List[int]:
+#         s_len, p_len = len(s), len(p)
+#         if s_len < p_len:
+#             return []
+#         ans = []
+#         s_count = [0] * 26
+#         p_count = [0] * 26
+#         for i in range(p_len):
+#             s_count[ord(s[i]) - 97] += 1
+#             p_count[ord(p[i]) - 97] += 1
+#         if s_count == p_count:
+#             ans.append(0)
+#         for i in range(s_len - p_len):
+#             s_count[ord(s[i]) - 97] -= 1
+#             s_count[ord(s[i + p_len]) - 97] += 1
+#             if s_count == p_count:
+#                 ans.append(i + 1)
+#         return ans
+
+"""448. 找到所有数组中消失的数字"""  #不使用额外空间则原地修改或者位操作
+# class Solution:
+#     def findDisappearedNumbers(self, nums: List[int]) -> List[int]:
+#         # n = len(nums)
+#         # for num in nums:
+#         #     nums[(num-1)%n] += n
+#         #return [i+1 for i,num in enumerate(nums) if num <= n]
+#         for n in nums:   #和上面的解法一个道理
+#             nums[abs(n)-1] = - abs(nums[abs(n)-1])
+#         return [i+1 for i,num in enumerate(nums) if num > 0]
+
+"""461. 汉明距离"""  
+# class Solution:
+#     def hammingDistance(self, x: int, y: int) -> int:
+#         # res = 0
+#         # while x or y:
+#         #     if x & 1 != y & 1:
+#         #         res += 1
+#         #     x >>= 1
+#         #     y >>= 1
+#         # return res
+#         res = 0
+#         s = x ^ y
+#         while s:
+#             res += s & 1
+#             s >>= 1
+#         return res
+
+"""494. 目标和"""  
+# class Solution:   #python dfs超时
+#     def findTargetSumWays(self, nums: List[int], target: int) -> int:
+#         def dfs(target, idx, total):
+#             res = 0
+#             if idx == len(nums) - 1:
+#                 if target == total or target == total - 2*nums[idx]:
+#                     res += 1
+#                 return res
+#             res += dfs(target, idx+1, total)
+#             res += dfs(target, idx+1, total - 2*nums[idx])
+#             return res
+#         return dfs(target, 0, sum(nums))
+
+# class Solution:   #转换为背包问题使用动规，核心思想在于符号为负的元素和可以用sum和target表示出来，即可转化为背包问题
+#                   # dp[i][j]表示在数组nums的前i个数中选取元素，使得这些元素之和等于j的方案数
+#     def findTargetSumWays(self, nums: List[int], target: int) -> int:
+#         temp = sum(nums) - target
+#         if temp < 0 or temp & 1:
+#             return 0
+#         neg =  int(temp / 2)
+#         n = len(nums)
+#         dp = [[0]*(neg+1) for _ in range(n+1)]
+#         for j in range(neg+1):
+#             dp[0][j] = 1 if j == 0 else 0
+#         for i in range(1,n+1):
+#             for j in range(neg+1):
+#                 if j < nums[i-1]:
+#                     dp[i][j] = dp[i-1][j]
+#                 else:
+#                     dp[i][j] = dp[i-1][j] + dp[i-1][j-nums[i-1]]
+#         return dp[n][neg]
+
+"""538. 把二叉搜索树转换为累加树"""  
+# class Solution:
+#     def convertBST(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+#         val = 0
+#         def mid_order(node):
+#             nonlocal val            #这一点还挺关键，如果把这个val当作函数参数反而不好处理
+#             if not node:
+#                 return 
+#             mid_order(node.right)
+#             val += node.val
+#             node.val = val
+#             mid_order(node.left)
+#         mid_order(root)
+#         return root
+
+"""543. 二叉树的直径"""  
+# class Solution:
+#     def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+#         max_length = 0
+#         def post_order(node):
+#             if not node:
+#                 return -1, -1
+#             nonlocal max_length
+#             left_length, right_length = 0, 0
+#             left_length = max(post_order(node.left)) + 1
+#             right_length = max(post_order(node.right)) + 1
+#             max_length = max(max_length, left_length+right_length)
+#             return left_length, right_length
+#         post_order(root)
+#         return max_length
+
+"""560. 和为 K 的子数组"""  #前缀和 + 哈希表      前缀和一般都会有哨兵
+# class Solution:
+#     def subarraySum(self, nums: List[int], k: int) -> int:
+#         hash_map = collections.defaultdict(int)
+#         hash_map[0] += 1
+#         pre = 0
+#         res = 0
+#         for num in nums:
+#             pre += num
+#             res += hash_map[pre - k]
+#             hash_map[pre] += 1
+#         return res
+
+"""560. 和为 K 的子数组""" #把这个数组分成三段,左段和右段是标准的升序数组,中段数组虽是无序的,但满足最小值大于左段的最大值,最大值小于右段的最小值。
+# class Solution:            #找中段的左右边界
+#     def findUnsortedSubarray(self, nums: List[int]) -> int:
+#         n = len(nums)
+#         maxn, right = float("-inf"),-1
+#         minn, left = float("inf"),-1
+#         for i in range(n):
+#             if maxn <= nums[i]:
+#                 maxn = nums[i]
+#             else:           #进入到右段后则最大值不断刷新，而指针不变
+#                 right = i
+#             if minn >= nums[n-i-1]:
+#                 minn = nums[n-i-1]
+#             else:          #进入到左段后则最小值不断刷新，而指针不变
+#                 left = n - i - 1
+#         return 0 if left == -1 else right - left + 1
+
+"""621. 任务调度器"""  #桶思想
+# class Solution:
+#     def leastInterval(self, tasks: List[str], n: int) -> int:
+#         freq = collections.Counter(tasks)
+#         # 最多的执行次数
+#         maxExec = max(freq.values())
+#         # 具有最多执行次数的任务数量
+#         maxCount = sum(1 for v in freq.values() if v == maxExec)
+#         return max((maxExec - 1) * (n + 1) + maxCount, len(tasks))
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+"""617. 合并二叉树"""
+# class Solution:
+#     def mergeTrees(self, root1: TreeNode, root2: TreeNode) -> TreeNode:
+#         if not root1:
+#             return root2
+#         if not root2:
+#             return root1
+#         new_node = TreeNode(root1.val+root2.val)
+#         new_node.left = self.mergeTrees(root1.left, root2.left)
+#         new_node.right = self.mergeTrees(root1.right, root2.right)
+#         return new_node
 
 
 
